@@ -89,11 +89,11 @@ def recordAPT(satellite, end_time):
     date = datetime.utcnow()
 
     # Build filename
-    filename = config.output_dir + "/" + satellite.name + "/" + satellite.name + " at " + str(datetime.utcnow())
+    filename = config.output_dir + "/" + satellite.name + "/" + satellite.name + "_" + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     print("Saving as '" + filename + "'")
 
     # Build command. We receive with rtl_fm and output a .wav with ffmpeg
-    command = "rtl_fm -f " + str(satellite.frequency) + "M -M mbfm -s 60000 -r 48000 - | ffmpeg -f s16le -channels 1 -sample_rate 48k -i pipe:0 -f wav '" + filename + ".wav'"
+    command = "rtl_fm -f " + str(satellite.frequency) + "M -M mbfm -s 60000 -r 48000 - | ffmpeg -hide_banner -f s16le -channels 1 -sample_rate 48k -i pipe:0 -f wav '" + filename + ".wav'"
     subprocess.Popen([command], shell=1)
 
     # Wait until pass is over
@@ -115,7 +115,7 @@ def recordLRPT(satellite, end_time):
     date = datetime.utcnow()
 
     # Build filename
-    filename = config.output_dir + "/" + satellite.name + "/" + satellite.name + " at " + str(datetime.utcnow())
+    filename = config.output_dir + "/" + satellite.name + "/" + satellite.name + "_" + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     print("Saving as '" + filename + "'")
 
     # Build command. We receive with rtl_fm and output a raw output to feed into the demodulator
@@ -187,22 +187,22 @@ def decodeLRPT(filename, delete_processed_files):
     print("Decoding '" + filename + "'...")
 
     # Decode with meteor_decoder. Both IR & Visible
-    command1 = "medet '" + filename + ".lrpt' '" + filename + " - Visible' -r 65 -g 65 -b 64"
-    command2 = "medet '" + filename + ".lrpt' '" + filename + " - Infrared' -r 68 -g 68 -b 68"
+    command1 = "medet '" + filename + ".lrpt' '" + filename + "-Visible' -r 65 -g 65 -b 64"
+    command2 = "medet '" + filename + ".lrpt' '" + filename + "-Infrared' -r 68 -g 68 -b 68"
     process2 = subprocess.Popen([command2], shell=1)
     if subprocess.Popen([command1], shell=1).wait() == 0 and process2.wait() == 0 and delete_processed_files:
         os.remove(filename + ".lrpt")
     
     # Convert to png to save on space
-    command1 = "ffmpeg -i '" + filename + " - Visible.bmp' '" + filename + " - Visible.png' "
-    command2 = "ffmpeg -i '" + filename + " - Infrared.bmp' '" + filename + " - Infrared.png' "
+    command1 = "ffmpeg -hide_banner -i '" + filename + "-Visible.bmp' '" + filename + "-Visible.png' "
+    command2 = "ffmpeg -hide_banner -i '" + filename + "-Infrared.bmp' '" + filename + "-Infrared.png' "
     if subprocess.Popen([command1], shell=1).wait() == 0 and subprocess.Popen([command2], shell=1).wait() == 0 and delete_processed_files:
-        os.remove(filename + " - Visible.bmp")
-        os.remove(filename + " - Infrared.bmp")
+        os.remove(filename + "-Visible.bmp")
+        os.remove(filename + "-Infrared.bmp")
 
     # Return a list of produced outputs
-    output_files.append(filename + " - Visible.bmp")
-    output_files.append(filename + " - Infrared.bmp")
+    output_files.append(filename + "-Visible.bmp")
+    output_files.append(filename + "-Infrared.bmp")
 
     print("Done decoding'" + filename + "'!")
 

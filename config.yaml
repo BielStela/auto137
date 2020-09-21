@@ -32,19 +32,27 @@ satellites:
     frequency: 137.100
     downlink: LRPT
     delete_processed_files: true
+  - sat:
+    name: METEOR-M2 2 
+    norad: 44387
+    priority: 1
+    min_elevation: 20
+    frequency: 137.900
+    downlink: LRPT
+    delete_processed_files: true
 config:
   # How often should TLE data be updated?
   tle_update_interval: 1
   # Where will images and temporary files be stored
-  output_dir: "../DATA"
+  output_dir: "/home/biel/Pictures/APT/auto"
   # Your location
   station:
-    latitude: 0.0
-    longitude: 0.0
-    elevation: 0
+    latitude: 39.3654895
+    longitude: 2.9406836
+    elevation: 10
   # Optional RSS feed. Using a webserver such as NGINX or Apache2 is recommended
   rss:
-    enabled: true
+    enabled: false
     webserver: false
     port: 8080
   # Run a command once files (images or raw) or done being processed
