@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from threading import Thread
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 print("-----------------------------------------")
 print("            Starting Auto137             ")
