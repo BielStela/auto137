@@ -1,5 +1,7 @@
 import config
 import core
+
+import logging
 import time
 import passutils
 import os
@@ -7,6 +9,8 @@ import rss
 from datetime import datetime, timedelta
 from threading import Thread
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 print("-----------------------------------------")
 print("            Starting Auto137             ")
@@ -26,14 +30,12 @@ for satellite in config.satellites:
 core.initScheduler()
 core.scheduler.add_job(core.updateTLEs, 'interval', id='tle_refresh', hours=config.tle_update_interval)
 core.scheduler.add_job(passutils.updatePass, 'interval',  id='passes_refresh', hours=1)
-print("Scheduler started!")
-print('\n')
+logger.info("Scheduler started!")
 
 # Start decoding thread
 decodingThread = Thread(target = passutils.processDecodeQueue)
 decodingThread.start()
-print("Decoding thread started!")
-print('\n')
+logger.info("Decoding thread started!")
 
 # Start RSS Server if enabled
 if config.rss_enabled:

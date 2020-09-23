@@ -1,8 +1,10 @@
 import yaml
 import io
+import logging
 from core import Satellite
 from orbit_predictor.locations import Location
 
+logging.basicConfig(format='%(asctime)s %(message)s', filename='auto137.log')
 # Config objects
 satellites = list()
 tle_update_interval = int()

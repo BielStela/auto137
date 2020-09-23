@@ -4,9 +4,13 @@ import time
 import core
 import config
 import rss
+import logging
+
 from datetime import datetime, timedelta
 from core import Recording
 
+
+logger = logging.getLogger(__name__)
 # Schedule a pass job
 def schedulePass(pass_to_add, satellite, custom_aos = 0, custom_los = 0):
 
@@ -18,7 +22,7 @@ def schedulePass(pass_to_add, satellite, custom_aos = 0, custom_los = 0):
 
     # Schedule the task
     core.scheduler.add_job(recordPass, 'date', [satellite, custom_los, pass_to_add], run_date=custom_aos)
-    print("Scheduled " + satellite.name + " pass at " + str(custom_aos))
+    logger.info("Scheduled " + satellite.name + " pass at " + str(custom_aos))
 
 # Schedule passes and resolve conflicts
 def updatePass():
