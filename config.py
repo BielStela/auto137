@@ -26,8 +26,6 @@ post_processing_hook_foreach = bool()
 def loadConfig(file):
     global satellites, tle_update_interval, location, output_dir, rss_enabled, rss_port, rss_webserver, post_processing_hook_command, post_processing_hook_enabled, post_processing_hook_foreach, maximum_overlap
 
-    logging.basicConfig(format="%(asctime)s %(message)s", filename="auto137.log")
-
     # Open our file
     f = io.open(file, mode="r", encoding="utf-8")
 

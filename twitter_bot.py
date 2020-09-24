@@ -5,7 +5,7 @@ import logging
 import tweepy
 
 # NOTE: Need to source the keys file to have the secrets available.
-
+logging.basicConfig(filename='twitter_bot.log',)
 
 if __name__ == '__main__':
     auth = tweepy.OAuthHandler(os.environ.get("API_KEY"), os.environ.get("API_SECRET_KEY"))
@@ -21,8 +21,13 @@ if __name__ == '__main__':
     img.convert('RGB').save(jpeg_filename, optimize=True, quality=90)
     
     media = api.media_upload(jpeg_filename)
-    api.update_status(status='', media_ids=[media.media_id])
+
+    try:
+        api.update_status(status='', media_ids=[media.media_id])
+    except Exception as e:
+        logging.error(str(e))
+        os.remove(jpeg_filename)
+        sys.exit(1)
     logging.info(f'Posted tweet with image {jpeg_filename}')
-    
     os.remove(jpeg_filename)
 

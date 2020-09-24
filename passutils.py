@@ -9,7 +9,7 @@ import logging
 from datetime import datetime, timedelta
 from core import Recording
 
-
+logger = logging.getLogger(__name__)
 # Schedule a pass job
 def schedulePass(pass_to_add, satellite, custom_aos=0, custom_los=0):
 
@@ -23,7 +23,7 @@ def schedulePass(pass_to_add, satellite, custom_aos=0, custom_los=0):
     core.scheduler.add_job(
         recordPass, "date", [satellite, custom_los, pass_to_add], run_date=custom_aos
     )
-    logging.info("Scheduled " + satellite.name + " pass at " + str(custom_aos))
+    logger.info("Scheduled " + satellite.name + " pass at " + str(custom_aos))
 
 
 # Schedule passes and resolve conflicts
@@ -102,7 +102,7 @@ def updatePass():
 
 # APT Pass record function
 def recordAPT(satellite, end_time):
-    logging.info("AOS " + satellite.name + "...")
+    logger.info("AOS " + satellite.name + "...")
     date = datetime.utcnow()
 
     # Build filename
@@ -115,7 +115,7 @@ def recordAPT(satellite, end_time):
         + "_"
         + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     )
-    logging.info("Saving as '" + filename + "'")
+    logger.info("Saving as '" + filename + "'")
 
     # Build command. We receive with rtl_fm and output a .wav with ffmpeg
     command = (
@@ -134,7 +134,7 @@ def recordAPT(satellite, end_time):
     # End our command
     subprocess.Popen("killall rtl_fm".split(" "))
 
-    logging.info("LOS " + satellite.name + "...")
+    logger.info("LOS " + satellite.name + "...")
 
     # Give it some time to exit and queue the decoding
     time.sleep(10)
@@ -143,7 +143,7 @@ def recordAPT(satellite, end_time):
 
 # LRPT Pass record function
 def recordLRPT(satellite, end_time):
-    logging.info("AOS " + satellite.name + "...")
+    logger.info("AOS " + satellite.name + "...")
     date = datetime.utcnow()
 
     # Build filename
@@ -156,7 +156,7 @@ def recordLRPT(satellite, end_time):
         + "_"
         + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     )
-    logging.info("Saving as '" + filename + "'")
+    logger.info("Saving as '" + filename + "'")
 
     # Build command. We receive with rtl_fm and output a raw output to feed into the demodulator
     command = (
@@ -175,7 +175,7 @@ def recordLRPT(satellite, end_time):
     # End our command
     subprocess.Popen("killall rtl_fm".split(" "))
 
-    logging.info("LOS " + satellite.name + "...")
+    logger.info("LOS " + satellite.name + "...")
 
     # Give it some time to exit and queue the decoding
     time.sleep(10)
@@ -206,7 +206,7 @@ def recordPass(satellite, end_time, passobj):
 # Decode APT file
 def decodeAPT(filename, delete_processed_files):
     output_files = list()
-    logging.info("Decoding '" + filename + "'...")
+    logger.info("Decoding '" + filename + "'...")
 
     # Build noaa-apt command
     command = "noaa-apt '" + filename + ".wav' -o '" + filename + ".png'"
@@ -218,7 +218,7 @@ def decodeAPT(filename, delete_processed_files):
     # Return a list of produced outputs
     output_files.append(filename + ".png")
 
-    logging.info("Done decoding'" + filename + "'!")
+    logger.info("Done decoding'" + filename + "'!")
 
     return output_files
 
@@ -226,7 +226,7 @@ def decodeAPT(filename, delete_processed_files):
 # Decode LRPT file
 def decodeLRPT(filename, delete_processed_files):
     output_files = list()
-    logging.info("Demodulating '" + filename + "'...")
+    logger.info("Demodulating '" + filename + "'...")
 
     # Demodulate with meteor_demod
     command = (
@@ -235,7 +235,7 @@ def decodeLRPT(filename, delete_processed_files):
     if subprocess.Popen([command], shell=1).wait() == 0 and delete_processed_files:
         os.remove(filename + ".raw")
 
-    logging.info("Decoding '" + filename + "'...")
+    logger.info("Decoding '" + filename + "'...")
 
     # Decode with meteor_decoder. Both IR & Visible
     command1 = (
@@ -279,7 +279,7 @@ def decodeLRPT(filename, delete_processed_files):
     output_files.append(filename + "-Visible.bmp")
     output_files.append(filename + "-Infrared.bmp")
 
-    logging.info("Done decoding'" + filename + "'!")
+    logger.info("Done decoding'" + filename + "'!")
 
     return output_files
 
