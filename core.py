@@ -19,9 +19,19 @@ def initScheduler():
     scheduler.configure(timezone=utc)
     scheduler.start()
 
+
 # Satellite class
 class Satellite:
-    def __init__(self, name, norad, priority, min_elevation, frequency, downlink, delete_processed_files):
+    def __init__(
+        self,
+        name,
+        norad,
+        priority,
+        min_elevation,
+        frequency,
+        downlink,
+        delete_processed_files,
+    ):
         self.name = name
         self.norad = norad
         self.priority = priority
@@ -29,14 +39,17 @@ class Satellite:
         self.frequency = frequency
         self.downlink = downlink
         self.delete_processed_files = delete_processed_files
+
     def fetchTLE(self):
         tle = fetch_tle.fetch_tle_from_celestrak(self.norad)
         name, line1, line2 = tle
         self.tle_1 = line1
         self.tle_2 = line2
+
     def getPredictor(self):
         self.predictor = get_predictor_from_tle_lines((self.tle_1, self.tle_2))
         return self.predictor
+
 
 # Recording class
 class Recording:
@@ -45,6 +58,7 @@ class Recording:
         self.filename = filename
         self.date = date
         self.passobj = passobj
+
 
 # Update TLE
 def updateTLEs():
@@ -55,4 +69,3 @@ def updateTLEs():
         print("  " + satellite.tle_2)
         print()
     print()
-    

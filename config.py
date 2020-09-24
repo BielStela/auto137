@@ -4,7 +4,7 @@ import logging
 from core import Satellite
 from orbit_predictor.locations import Location
 
-logging.basicConfig(format='%(asctime)s %(message)s', filename='auto137.log')
+
 # Config objects
 satellites = list()
 tle_update_interval = int()
@@ -22,8 +22,12 @@ post_processing_hook_command = str()
 post_processing_hook_enabled = bool()
 post_processing_hook_foreach = bool()
 
+
 def loadConfig(file):
     global satellites, tle_update_interval, location, output_dir, rss_enabled, rss_port, rss_webserver, post_processing_hook_command, post_processing_hook_enabled, post_processing_hook_foreach, maximum_overlap
+
+    logging.basicConfig(format="%(asctime)s %(message)s", filename="auto137.log")
+
     # Open our file
     f = io.open(file, mode="r", encoding="utf-8")
 
@@ -41,12 +45,18 @@ def loadConfig(file):
     rss_port = int(config["config"]["rss"]["port"])
 
     # Post-Processing Hook
-    post_processing_hook_command = str(config["config"]["post_processing_hook"]["command"])
-    post_processing_hook_enabled = bool(config["config"]["post_processing_hook"]["enabled"])
-    post_processing_hook_foreach = bool(config["config"]["post_processing_hook"]["run_foreach"])
+    post_processing_hook_command = str(
+        config["config"]["post_processing_hook"]["command"]
+    )
+    post_processing_hook_enabled = bool(
+        config["config"]["post_processing_hook"]["enabled"]
+    )
+    post_processing_hook_foreach = bool(
+        config["config"]["post_processing_hook"]["run_foreach"]
+    )
 
     print("TLE Update interval : " + str(tle_update_interval) + " hour(s)")
-    print('\n')
+    print("\n")
 
     # Ground station
     latitude = config["config"]["station"]["latitude"]
@@ -56,7 +66,7 @@ def loadConfig(file):
     print("    Latitude     : " + str(latitude))
     print("    Longitude    : " + str(longitude))
     print("    Elevation    : " + str(elevation))
-    print('\n')
+    print("\n")
     location = Location("Station", latitude, longitude, elevation)
 
     # Load satellites
@@ -75,8 +85,15 @@ def loadConfig(file):
         print("     Frequency               : " + str(frequency))
         print("     Downlink type           : " + downlink)
         print("     Delete processed files  : " + str(delete_processed_files))
-        satellite = Satellite(name, norad, priority, min_elevation, frequency, downlink, delete_processed_files)
+        satellite = Satellite(
+            name,
+            norad,
+            priority,
+            min_elevation,
+            frequency,
+            downlink,
+            delete_processed_files,
+        )
         satellites.append(satellite)
-    
-    print('\n')
-    
+
+    print("\n")
