@@ -58,7 +58,7 @@ config:
   # Run a command once files (images or raw) or done being processed
   post_processing_hook:
     # You can set any command here. {file} will be replace by the path to the file in the following format '/path/to/file'
-    command: ". keys; python3 twitter_bot.py {file}"
+    command: "python3 twitter_bot.py {file}"
     enabled: true
     # If enabled the command will be ran once for each output file. If set to false {file} will instead be replaced by a series of paths, eg. '/path/to/file1' '/path/to/file2'
     run_foreach: true
