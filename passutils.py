@@ -204,15 +204,17 @@ def recordPass(satellite, end_time, passobj):
 
 
 # Decode APT file
-def decodeAPT(filename, delete_processed_files):
+def decodeAPT(filename, satellite):
     output_files = list()
     logger.info("Decoding '" + filename + "'...")
 
-    # Build noaa-apt command
-    command = "noaa-apt '" + filename + ".wav' -o '" + filename + ".png'"
+    # sate name to use in noaa-apt command with the format "noaa_1x"
+    sate_name = satellite.name.strip().lower().replace(" ", "_")
+    # N-S or S-N pass time is inferred from file timestamp. Used to rotate the image with -R
+    command = f"noaa-apt '{filename}.wav' -o '{filename}.png' -R -s {sate_name}" 
 
     # Run and delete the recording to save disk space
-    if subprocess.Popen([command], shell=1).wait() == 0 and delete_processed_files:
+    if subprocess.Popen([command], shell=1).wait() == 0 and satellite.delete_processed_files:
         os.remove(filename + ".wav")
 
     # Return a list of produced outputs
