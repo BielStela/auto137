@@ -7,7 +7,7 @@ from tweepy import TweepError
 
 # NOTE: Need to source the keys file to have the secrets available.
 if __name__ == "__main__":
-    logging.basicConfig(filename="twitter_bot.log", level=logging.INFO)
+    logging.basicConfig(filename="twitter_bot.log", level=logging.INFO, format='%(asctime)s : %(message)s')
     auth = tweepy.OAuthHandler(
         os.environ.get("API_KEY"), os.environ.get("API_SECRET_KEY")
     )
