@@ -25,6 +25,7 @@ print("\n")
 
 # Parse config, fetch some data
 config.loadConfig("config.yaml")
+logger.info('Configuration loaded.')
 core.updateTLEs()
 
 # Create images folders

@@ -22,9 +22,12 @@ post_processing_hook_command = str()
 post_processing_hook_enabled = bool()
 post_processing_hook_foreach = bool()
 
+post_processing_hook_min_elevation = int()
+post_processing_hook_daytime_only = bool()
 
 def loadConfig(file):
     global satellites, tle_update_interval, location, output_dir, rss_enabled, rss_port, rss_webserver, post_processing_hook_command, post_processing_hook_enabled, post_processing_hook_foreach, maximum_overlap
+    global post_processing_hook_min_elevation, post_processing_hook_daytime_only
 
     # Open our file
     f = io.open(file, mode="r", encoding="utf-8")
@@ -52,6 +55,12 @@ def loadConfig(file):
     post_processing_hook_foreach = bool(
         config["config"]["post_processing_hook"]["run_foreach"]
     )
+    post_processing_hook_min_elevation = int(
+        config["config"]["post_processing_hook"]["min_elevation"]
+    )
+    post_processing_hook_daytime_only = bool(
+        config["config"]["post_processing_hook"]["daytime_only"]
+    )
 
     print("TLE Update interval : " + str(tle_update_interval) + " hour(s)")
     print("\n")
@@ -76,6 +85,7 @@ def loadConfig(file):
         frequency = sat["frequency"]
         downlink = sat["downlink"]
         delete_processed_files = sat["delete_processed_files"]
+
         print("Adding " + name + " :")
         print("     NORAD                   : " + str(norad))
         print("     Priority                : " + str(priority))
@@ -83,6 +93,7 @@ def loadConfig(file):
         print("     Frequency               : " + str(frequency))
         print("     Downlink type           : " + downlink)
         print("     Delete processed files  : " + str(delete_processed_files))
+        
         satellite = Satellite(
             name,
             norad,

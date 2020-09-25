@@ -1,12 +1,15 @@
 import subprocess
 import os
 import time
-import core
-import config
-import rss
 import logging
-
 from datetime import datetime, timedelta
+import math
+
+import rss
+import ephem
+
+import config
+import core
 from core import Recording
 
 logger = logging.getLogger(__name__)
@@ -211,10 +214,13 @@ def decodeAPT(filename, satellite):
     # sate name to use in noaa-apt command with the format "noaa_1x"
     sate_name = satellite.name.strip().lower().replace(" ", "_")
     # N-S or S-N pass time is inferred from file timestamp. Used to rotate the image with -R
-    command = f"noaa-apt '{filename}.wav' -o '{filename}.png' -R -s {sate_name}" 
+    command = f"noaa-apt '{filename}.wav' -o '{filename}.png' -R -s {sate_name}"
 
     # Run and delete the recording to save disk space
-    if subprocess.Popen([command], shell=1).wait() == 0 and satellite.delete_processed_files:
+    if (
+        subprocess.Popen([command], shell=1).wait() == 0
+        and satellite.delete_processed_files
+    ):
         os.remove(filename + ".wav")
 
     # Return a list of produced outputs
@@ -304,18 +310,25 @@ def decodePass(filename, satellite, date, passobj):
 
     # Process post-processing hook if enabled
     if config.post_processing_hook_enabled:
-        if config.post_processing_hook_foreach:
-            for file_out in output_files:
-                command = config.post_processing_hook_command.replace(
-                    "{file}", "'" + file_out + "'"
-                )
-                subprocess.Popen([command], shell=1).wait()
-        else:
-            file_list = str()
-            for file_out in output_files:
-                file_list += "'" + file_out + "' "
-            command = config.post_processing_hook_command.replace("{file}", file_list)
-            subprocess.Popen([command], shell=1).wait()
+        is_daytime = pass_at_daytime(
+            passobj.aos,
+            config.location.latitude_deg,
+            config.location.longitude_deg,
+            config.location.elevation_m
+        )
+
+        if passobj.max_elevation_deg >= config.post_processing_hook_min_elevation:
+            if config.post_processing_hook_daytime_only and is_daytime:
+                if config.post_processing_hook_foreach:
+                    for file_out in output_files:
+                        command = config.post_processing_hook_command.replace("{file}", f"'{file_out}'")
+                        subprocess.Popen([command], shell=1).wait()
+                else:
+                    file_list = str()
+                    for file_out in output_files:
+                        file_list += f"'{file_out}' "
+                    command = config.post_processing_hook_command.replace("{file}", file_list)
+                    subprocess.Popen([command], shell=1).wait()
 
 
 # Process pending decodings
@@ -326,3 +339,13 @@ def processDecodeQueue():
             decode = core.decoding_queue[0]
             decodePass(decode.filename, decode.satellite, decode.date, decode.passobj)
             core.decoding_queue.remove(decode)
+
+
+def pass_at_daytime(aos, lat, lon, elev) -> bool:
+    sun = ephem.Sun()
+    observer = ephem.Observer()
+    observer.lat, observer.lon, observer.elevation = lat, lon, elev
+    observer.date = aos
+    sun.compute(observer)
+    # alt is in radians so convert to degrees. Use the nautical night (-12º) to get this funky shadows 
+    return sun.alt*180/math.pi > -12
