@@ -4,7 +4,7 @@ satellites:
     name: NOAA 15
     norad: 25338
     priority: 0
-    min_elevation: 10
+    min_elevation: 20
     frequency: 137.620
     downlink: APT
     delete_processed_files: true
@@ -12,7 +12,7 @@ satellites:
     name: NOAA 18
     norad: 28654
     priority: 0
-    min_elevation: 10
+    min_elevation: 20
     frequency: 137.9125
     downlink: APT
     delete_processed_files: true
@@ -20,7 +20,7 @@ satellites:
     name: NOAA 19
     norad: 33591
     priority: 0
-    min_elevation: 10
+    min_elevation: 20
     frequency: 137.100
     downlink: APT
     delete_processed_files: true
@@ -28,7 +28,7 @@ satellites:
     name: METEOR-M 2 
     norad: 40069
     priority: 1
-    min_elevation: 20
+    min_elevation: 30
     frequency: 137.100
     downlink: LRPT
     delete_processed_files: true
@@ -36,7 +36,7 @@ satellites:
     name: METEOR-M2 2 
     norad: 44387
     priority: 1
-    min_elevation: 20
+    min_elevation: 30
     frequency: 137.900
     downlink: LRPT
     delete_processed_files: true
