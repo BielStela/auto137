@@ -1,6 +1,5 @@
 import yaml
 import io
-import logging
 from core import Satellite
 from orbit_predictor.locations import Location
 

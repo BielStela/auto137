@@ -9,34 +9,28 @@ import logging
 
 import config
 import core
-# create logger with 'spam_application'
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-# create file handler which logs even debug messages
-fh = logging.FileHandler('spam.log')
-fh.setLevel(logging.DEBUG)
-# create console handler with a higher log level
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-# create formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-ch.setFormatter(formatter)
-# add the handlers to the logger
-logger.addHandler(fh)
-logger.addHandler(ch)
 
 
 def main():
+    # Congifure logger
+    logger = logging.getLogger('main')
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler('auto137.log')
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s : %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
     # Parse config, fetch some data
     config.loadConfig("config.yaml")
-    logger.info('Configuration loaded.')
+    logger.info('Configuration loaded/')
     core.updateTLEs()
 
     # Create images folders
     for satellite in config.satellites:
         if not Path(config.output_dir + "/" + satellite.name).is_dir():
             os.makedirs(config.output_dir + "/" + satellite.name)
+            logger.info('Data directories structure created.')
 
     # Init sheduler and start repeating tasks
     core.initScheduler()
@@ -63,9 +57,9 @@ def main():
         time.sleep(10)
 
 if __name__ == '__main__':
-    print("-----------------------------------------")
-    print("            Starting Auto137             ")
-    print("-----------------------------------------")
+    print("+---------------------------------------+")
+    print("|               Auto137                 |")
+    print("+---------------------------------------+")
 
     main()
 

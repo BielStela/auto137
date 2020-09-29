@@ -12,7 +12,7 @@ import config
 import core
 from core import Recording
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('main.passutils')
 # Schedule a pass job
 def schedulePass(pass_to_add, satellite, custom_aos=0, custom_los=0):
 

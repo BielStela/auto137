@@ -4,7 +4,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import utc
 from threading import Lock
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('main.core')
 
 import config
 
