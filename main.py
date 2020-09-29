@@ -17,7 +17,7 @@ def main():
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler('auto137.log')
     fh.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s : %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s : %(message)s')
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
