@@ -2,8 +2,11 @@ from satellite_tle import fetch_tle
 from orbit_predictor.sources import get_predictor_from_tle_lines
 from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import utc
-import config
 from threading import Lock
+import logging
+logger = logging.getLogger(__name__)
+
+import config
 
 # Main scheduler
 scheduler = BackgroundScheduler()
@@ -42,6 +45,7 @@ class Satellite:
         self.delete_processed_files = delete_processed_files
 
     def fetchTLE(self):
+        logger.info(f'Updating TLE for {self.verbose_name}...')
         tle = fetch_tle.fetch_tle_from_celestrak(self.norad)
         name, line1, line2 = tle
         self.tle_1 = line1
@@ -64,9 +68,5 @@ class Recording:
 # Update TLE
 def updateTLEs():
     for satellite in config.satellites:
-        print("Fetching TLE for " + satellite.name)
         satellite.fetchTLE()
-        print("  " + satellite.tle_1)
-        print("  " + satellite.tle_2)
-        print()
-    print()
+    logger.info('TLEs updated!')

@@ -203,9 +203,9 @@ def decodeAPT(filename, satellite):
     logger.info(f"Decoding '{filename}'...")
 
     # sate name to use in noaa-apt command with the format "noaa_1x"
-    sate_name = satellite.name.strip().lower().replace(" ", "_")
+    sate_name = satellite.name.lower()
     # N-S or S-N pass time is inferred from file timestamp. Used to rotate the image with -R
-    command = f"noaa-apt '{filename}.wav' -o '{filename}.png' -R -s {sate_name}"
+    command = f"noaa-apt -R auto -s {sate_name} '{filename}.wav' -o '{filename}.png'"
 
     # Run and delete the recording to save disk space
     if (

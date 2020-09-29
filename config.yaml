@@ -44,7 +44,7 @@ config:
   # How often should TLE data be updated?
   tle_update_interval: 1
   # Where will images and temporary files be stored
-  output_dir: "/home/pi/sate_data"
+  output_dir: "/home/biel/Pictures/APT/auto/sate_data"
   # Your location
   station:
     latitude: 39.3654895
