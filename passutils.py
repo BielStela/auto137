@@ -26,7 +26,7 @@ def schedulePass(pass_to_add, satellite, custom_aos=0, custom_los=0):
     core.scheduler.add_job(
         recordPass, "date", [satellite, custom_los, pass_to_add], run_date=custom_aos
     )
-    logger.info("Scheduled " + satellite.name + " pass at " + str(custom_aos))
+    logger.info(f"Scheduled {satellite.name} pass at {str(custom_aos)}")
 
 
 # Schedule passes and resolve conflicts
@@ -105,7 +105,7 @@ def updatePass():
 
 # APT Pass record function
 def recordAPT(satellite, end_time):
-    logger.info("AOS " + satellite.name + "...")
+    logger.info(f"AOS {satellite.name}...")
     date = datetime.utcnow()
 
     # Build filename
@@ -122,11 +122,8 @@ def recordAPT(satellite, end_time):
 
     # Build command. We receive with rtl_fm and output a .wav with ffmpeg
     command = (
-        "rtl_fm -f "
-        + str(satellite.frequency)
-        + "M -M mbfm -s 60000 -r 48000 - | ffmpeg -hide_banner -f s16le -channels 1 -sample_rate 48k -i pipe:0 -f wav '"
-        + filename
-        + ".wav'"
+        f"rtl_fm -f {str(satellite.frequency)}M -M mbfm -s 60000 -r 48000 - | "
+        f"ffmpeg -hide_banner -f s16le -channels 1 -sample_rate 48k -i pipe:0 -f wav '{filename}.wav'"
     )
     subprocess.Popen([command], shell=1)
 
@@ -137,7 +134,7 @@ def recordAPT(satellite, end_time):
     # End our command
     subprocess.Popen("killall rtl_fm".split(" "))
 
-    logger.info("LOS " + satellite.name + "...")
+    logger.info(f"LOS {satellite.name}...")
 
     # Give it some time to exit and queue the decoding
     time.sleep(10)
@@ -146,7 +143,7 @@ def recordAPT(satellite, end_time):
 
 # LRPT Pass record function
 def recordLRPT(satellite, end_time):
-    logger.info("AOS " + satellite.name + "...")
+    logger.info(f"AOS {satellite.name}...")
     date = datetime.utcnow()
 
     # Build filename
@@ -159,16 +156,10 @@ def recordLRPT(satellite, end_time):
         + "_"
         + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     )
-    logger.info("Saving as '" + filename + "'")
+    logger.info(f"Saving as '{filename}'")
 
     # Build command. We receive with rtl_fm and output a raw output to feed into the demodulator
-    command = (
-        "rtl_fm -M raw -s 140000 -f "
-        + str(satellite.frequency)
-        + "M -E dc '"
-        + filename
-        + ".raw'"
-    )
+    command = f"rtl_fm -M raw -s 140000 -f {str(satellite.frequency)} M -E dc '{filename}.raw'"
     subprocess.Popen([command], shell=1)
 
     # Wait until pass is over
@@ -176,9 +167,9 @@ def recordLRPT(satellite, end_time):
         time.sleep(1)
 
     # End our command
-    subprocess.Popen("killall rtl_fm".split(" "))
+    subprocess.Popen("killall rtl_fm".split())
 
-    logger.info("LOS " + satellite.name + "...")
+    logger.info(f"LOS {satellite.name} ...")
 
     # Give it some time to exit and queue the decoding
     time.sleep(10)
@@ -209,7 +200,7 @@ def recordPass(satellite, end_time, passobj):
 # Decode APT file
 def decodeAPT(filename, satellite):
     output_files = list()
-    logger.info("Decoding '" + filename + "'...")
+    logger.info(f"Decoding '{filename}'...")
 
     # sate name to use in noaa-apt command with the format "noaa_1x"
     sate_name = satellite.name.strip().lower().replace(" ", "_")
@@ -226,59 +217,41 @@ def decodeAPT(filename, satellite):
     # Return a list of produced outputs
     output_files.append(filename + ".png")
 
-    logger.info("Done decoding'" + filename + "'!")
+    logger.info(f"Done decoding '{filename}'!")
 
     return output_files
 
 
 # Decode LRPT file
-def decodeLRPT(filename, delete_processed_files):
+def decodeLRPT(filename, satellite):
     output_files = list()
-    logger.info("Demodulating '" + filename + "'...")
+    logger.info(f"Demodulating '{filename}'...")
 
     # Demodulate with meteor_demod
-    command = (
-        "meteor_demod -B -s 140000 '" + filename + ".raw' -o '" + filename + ".lrpt'"
-    )
-    if subprocess.Popen([command], shell=1).wait() == 0 and delete_processed_files:
+    command = f"meteor_demod -B -s 140000 '{filename}.raw' -o '{filename}.lrpt'"
+    if subprocess.Popen([command], shell=1).wait() == 0 and satellite.delete_processed_files:
         os.remove(filename + ".raw")
 
     logger.info("Decoding '" + filename + "'...")
 
     # Decode with meteor_decoder. Both IR & Visible
-    command1 = (
-        "medet '" + filename + ".lrpt' '" + filename + "-Visible' -r 65 -g 65 -b 64"
-    )
-    command2 = (
-        "medet '" + filename + ".lrpt' '" + filename + "-Infrared' -r 68 -g 68 -b 68"
-    )
+    command1 = f"medet '{filename}.lrpt' '{filename}-Visible' -r 65 -g 65 -b 64"
+    command2 = f"medet '{filename}.lrpt' '{filename}-Infrared' -r 68 -g 68 -b 68"
     process2 = subprocess.Popen([command2], shell=1)
     if (
         subprocess.Popen([command1], shell=1).wait() == 0
         and process2.wait() == 0
-        and delete_processed_files
+        and satellite.delete_processed_files
     ):
         os.remove(filename + ".lrpt")
 
     # Convert to png to save on space
-    command1 = (
-        "ffmpeg -hide_banner -i '"
-        + filename
-        + "-Visible.bmp' '"
-        + filename
-        + "-Visible.png' "
-    )
-    command2 = (
-        "ffmpeg -hide_banner -i '"
-        + filename
-        + "-Infrared.bmp' '"
-        + filename
-        + "-Infrared.png' "
-    )
+    command1 = f"ffmpeg -hide_banner -i '{filename}-Visible.bmp' '{filename}-Visible.png' "
+    command2 = f"ffmpeg -hide_banner -i '{filename}-Infrared.bmp' '{filename}-Infrared.png' "
     if (
         subprocess.Popen([command1], shell=1).wait() == 0
         and subprocess.Popen([command2], shell=1).wait() == 0
-        and delete_processed_files
+        and satellite.delete_processed_files
     ):
         os.remove(filename + "-Visible.bmp")
         os.remove(filename + "-Infrared.bmp")
@@ -287,7 +260,7 @@ def decodeLRPT(filename, delete_processed_files):
     output_files.append(filename + "-Visible.bmp")
     output_files.append(filename + "-Infrared.bmp")
 
-    logger.info("Done decoding'" + filename + "'!")
+    logger.info(f"Done decoding '{filename}'!")
 
     return output_files
 
@@ -296,9 +269,9 @@ def decodeLRPT(filename, delete_processed_files):
 def decodePass(filename, satellite, date, passobj):
     output_files = list()
     if satellite.downlink == "APT":
-        output_files = decodeAPT(filename, satellite.delete_processed_files)
+        output_files = decodeAPT(filename, satellite)
     elif satellite.downlink == "LRPT":
-        output_files = decodeLRPT(filename, satellite.delete_processed_files)
+        output_files = decodeLRPT(filename, satellite)
     else:
         return
 
