@@ -32,7 +32,8 @@ class Satellite:
         downlink,
         delete_processed_files,
     ):
-        self.name = name
+        self.name = name.strip().replace(" ", "_")
+        self.verbose_name = name
         self.norad = norad
         self.priority = priority
         self.min_elevation = min_elevation

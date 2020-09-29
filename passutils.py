@@ -229,6 +229,8 @@ def decodeLRPT(filename, satellite):
 
     # Demodulate with meteor_demod
     command = f"meteor_demod -B -s 140000 '{filename}.raw' -o '{filename}.lrpt'"
+    if satellite.name == 'METEOR-M2_2':  # Add OQPSK mode for M2 sates
+        command += " -m oqpsk"
     if subprocess.Popen([command], shell=1).wait() == 0 and satellite.delete_processed_files:
         os.remove(filename + ".raw")
 
@@ -237,6 +239,9 @@ def decodeLRPT(filename, satellite):
     # Decode with meteor_decoder. Both IR & Visible
     command1 = f"medet '{filename}.lrpt' '{filename}-Visible' -r 65 -g 65 -b 64"
     command2 = f"medet '{filename}.lrpt' '{filename}-Infrared' -r 68 -g 68 -b 68"
+    if satellite.name == 'METEOR-M2_2':  # Add -diff coding for M2 sates
+        command1 += " -diff"
+        command2 += " -diff"
     process2 = subprocess.Popen([command2], shell=1)
     if (
         subprocess.Popen([command1], shell=1).wait() == 0
