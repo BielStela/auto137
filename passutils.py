@@ -4,6 +4,7 @@ import time
 import logging
 from datetime import datetime, timedelta
 import math
+from pathlib import Path
 
 import rss
 import ephem
@@ -118,7 +119,7 @@ def recordAPT(satellite, end_time):
         + "_"
         + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     )
-    logger.info("Saving as '" + filename + "'")
+    logger.info(f"Recording APT satellite {satellite.name} at {satellite.frequency}MHz to '{filename}'")
 
     # Build command. We receive with rtl_fm and output a .wav with ffmpeg
     command = (
@@ -156,10 +157,10 @@ def recordLRPT(satellite, end_time):
         + "_"
         + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     )
-    logger.info(f"Saving as '{filename}'")
+    logger.info(f"Recording LRPT satellite {satellite.name} at {satellite.frequency}Mhz to '{filename}'")
 
     # Build command. We receive with rtl_fm and output a raw output to feed into the demodulator
-    command = f"rtl_fm -M raw -s 140000 -f {str(satellite.frequency)} M -E dc '{filename}.raw'"
+    command = f"rtl_fm -M raw -s 140000 -f {str(satellite.frequency)}M -E dc '{filename}.raw'"
     subprocess.Popen([command], shell=1)
 
     # Wait until pass is over
@@ -200,10 +201,9 @@ def recordPass(satellite, end_time, passobj):
 # Decode APT file
 def decodeAPT(filename, satellite):
     output_files = list()
-    logger.info(f"Decoding '{filename}'...")
-
     # sate name to use in noaa-apt command with the format "noaa_1x"
     sate_name = satellite.name.lower()
+    logger.info(f"Decoding APT {sate_name} in '{filename}'")
     # N-S or S-N pass time is inferred from file timestamp. Used to rotate the image with -R
     command = f"noaa-apt -R auto -s {sate_name} '{filename}.wav' -o '{filename}.png'"
 
@@ -213,11 +213,11 @@ def decodeAPT(filename, satellite):
         and satellite.delete_processed_files
     ):
         os.remove(filename + ".wav")
-
+    
     # Return a list of produced outputs
     output_files.append(filename + ".png")
 
-    logger.info(f"Done decoding '{filename}'!")
+    logger.info(f"Done decoding APT '{filename}'!")
 
     return output_files
 
@@ -225,16 +225,17 @@ def decodeAPT(filename, satellite):
 # Decode LRPT file
 def decodeLRPT(filename, satellite):
     output_files = list()
-    logger.info(f"Demodulating '{filename}'...")
+    logger.info(f"Demodulating LRPT '{filename}'")
 
     # Demodulate with meteor_demod
-    command = f"meteor_demod -B -s 140000 '{filename}.raw' -o '{filename}.lrpt'"
     if satellite.name == 'METEOR-M2_2':  # Add OQPSK mode for M2 sates
-        command += " -m oqpsk"
+        command = f"meteor_demod -m oqpsk -B -s 140000 '{filename}.raw' -o '{filename}.lrpt'"
+    else:
+        command = f"meteor_demod -B -s 140000 '{filename}.raw' -o '{filename}.lrpt'"
     if subprocess.Popen([command], shell=1).wait() == 0 and satellite.delete_processed_files:
         os.remove(filename + ".raw")
 
-    logger.info("Decoding '" + filename + "'...")
+    logger.info(f"Decoding LRPT '{filename}'")
 
     # Decode with meteor_decoder. Both IR & Visible
     command1 = f"medet '{filename}.lrpt' '{filename}-Visible' -r 65 -g 65 -b 64"
@@ -248,7 +249,10 @@ def decodeLRPT(filename, satellite):
         and process2.wait() == 0
         and satellite.delete_processed_files
     ):
-        os.remove(filename + ".lrpt")
+        try:
+            os.remove(filename + ".lrpt")
+        except FileNotFoundError:
+            logger.error(f'File {filename}.lrpt not found. Might be because meteor_demod failed silently.')
 
     # Convert to png to save on space
     command1 = f"ffmpeg -hide_banner -i '{filename}-Visible.bmp' '{filename}-Visible.png' "
@@ -258,14 +262,16 @@ def decodeLRPT(filename, satellite):
         and subprocess.Popen([command2], shell=1).wait() == 0
         and satellite.delete_processed_files
     ):
-        os.remove(filename + "-Visible.bmp")
-        os.remove(filename + "-Infrared.bmp")
-
+        try:
+            os.remove(filename + "-Visible.bmp")
+            os.remove(filename + "-Infrared.bmp")
+        except FileNotFoundError:
+            logger.error(f'No bitmaps found for {filename}. Symptom that medet command has failed silently')
     # Return a list of produced outputs
     output_files.append(filename + "-Visible.bmp")
     output_files.append(filename + "-Infrared.bmp")
 
-    logger.info(f"Done decoding '{filename}'!")
+    logger.info(f"Done decoding LRPT '{filename}'!")
 
     return output_files
 
@@ -325,5 +331,5 @@ def pass_at_daytime(aos, lat, lon, elev) -> bool:
     observer.lat, observer.lon, observer.elevation = lat, lon, elev
     observer.date = aos
     sun.compute(observer)
-    # alt is in radians so convert to degrees. Use the nautical night (-12º) to get this funky shadows 
+    # alt is in radians so convert to degrees. Use the nautical night (-12º) to get the funky shadows 
     return sun.alt*180/math.pi > -12
