@@ -123,7 +123,7 @@ def recordAPT(satellite, end_time):
 
     # Build command. We receive with rtl_fm and output a .wav with ffmpeg
     command = (
-        f"rtl_fm -f {str(satellite.frequency)}M -M mbfm -s 60000 -r 48000 - | "
+        f"rtl_fm -f {str(satellite.frequency)}M -s 48000 -p -6 - | "
         f"ffmpeg -hide_banner -f s16le -channels 1 -sample_rate 48k -i pipe:0 -f wav '{filename}.wav'"
     )
     subprocess.Popen([command], shell=1)
@@ -160,7 +160,7 @@ def recordLRPT(satellite, end_time):
     logger.info(f"Recording LRPT satellite {satellite.name} at {satellite.frequency}Mhz to '{filename}'")
 
     # Build command. We receive with rtl_fm and output a raw output to feed into the demodulator
-    command = f"rtl_fm -M raw -s 140000 -f {str(satellite.frequency)}M -E dc '{filename}.raw'"
+    command = f"rtl_fm -M raw -s 140000 -f {str(satellite.frequency)}M -p -6 -E dc '{filename}.raw'"
     subprocess.Popen([command], shell=1)
 
     # Wait until pass is over
