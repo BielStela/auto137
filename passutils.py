@@ -1,22 +1,22 @@
-import subprocess
-import os
-import time
 import logging
-from datetime import datetime, timedelta
 import math
-from pathlib import Path
+import os
+import subprocess
+import time
+from datetime import datetime, timedelta
 
-import rss
 import ephem
 
 import config
 import core
+import rss
 from core import Recording
 
-logger = logging.getLogger('main.passutils')
+logger = logging.getLogger("main.passutils")
+
+
 # Schedule a pass job
 def schedulePass(pass_to_add, satellite, custom_aos=0, custom_los=0):
-
     # Allow setting custom aos/los
     if custom_aos == 0:
         custom_aos = pass_to_add.aos
@@ -119,14 +119,16 @@ def recordAPT(satellite, end_time):
         + "_"
         + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     )
-    logger.info(f"Recording APT satellite {satellite.name} at {satellite.frequency}MHz to '{filename}'")
+    logger.info(
+        f"Recording APT satellite {satellite.name} at {satellite.frequency}MHz to '{filename}'"
+    )
 
     # Build command. We receive with rtl_fm and output a .wav with ffmpeg
     command = (
         f"rtl_fm -f {str(satellite.frequency)}M -s 48000 -p -6 - | "
         f"ffmpeg -hide_banner -f s16le -channels 1 -sample_rate 48k -i pipe:0 -f wav '{filename}.wav'"
     )
-    subprocess.Popen([command], shell=1)
+    subprocess.Popen([command], shell=True)
 
     # Wait until pass is over
     while end_time >= datetime.utcnow():
@@ -157,11 +159,13 @@ def recordLRPT(satellite, end_time):
         + "_"
         + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     )
-    logger.info(f"Recording LRPT satellite {satellite.name} at {satellite.frequency}Mhz to '{filename}'")
+    logger.info(
+        f"Recording LRPT satellite {satellite.name} at {satellite.frequency}Mhz to '{filename}'"
+    )
 
     # Build command. We receive with rtl_fm and output a raw output to feed into the demodulator
     command = f"rtl_fm -M raw -s 140000 -f {str(satellite.frequency)}M -p -6 -E dc '{filename}.raw'"
-    subprocess.Popen([command], shell=1)
+    subprocess.Popen([command], shell=True)
 
     # Wait until pass is over
     while end_time >= datetime.utcnow():
@@ -209,11 +213,11 @@ def decodeAPT(filename, satellite):
 
     # Run and delete the recording to save disk space
     if (
-        subprocess.Popen([command], shell=1).wait() == 0
+        subprocess.Popen([command], shell=True).wait() == 0
         and satellite.delete_processed_files
     ):
         os.remove(filename + ".wav")
-    
+
     # Return a list of produced outputs
     output_files.append(filename + ".png")
 
@@ -228,11 +232,17 @@ def decodeLRPT(filename, satellite):
     logger.info(f"Demodulating LRPT '{filename}'")
 
     # Demodulate with meteor_demod
-    if satellite.name == 'METEOR-M2_2':  # Add OQPSK mode for M2 sates
-        command = f"meteor_demod -m oqpsk -B -s 140000 '{filename}.raw' -o '{filename}.lrpt'"
+    if satellite.name == "METEOR-M2_2":  # Add OQPSK mode for M2 sates
+        command = (
+            f"meteor_demod -m oqpsk -B -s 140000 '{filename}.raw' -o '{filename}.lrpt'"
+        )
     else:
         command = f"meteor_demod -B -s 140000 '{filename}.raw' -o '{filename}.lrpt'"
-    if subprocess.Popen([command], shell=1).wait() == 0 and satellite.delete_processed_files:
+
+    if (
+        subprocess.Popen([command], shell=True).wait() == 0
+        and satellite.delete_processed_files
+    ):
         os.remove(filename + ".raw")
 
     logger.info(f"Decoding LRPT '{filename}'")
@@ -240,36 +250,44 @@ def decodeLRPT(filename, satellite):
     # Decode with meteor_decoder. Both IR & Visible
     command1 = f"medet '{filename}.lrpt' '{filename}-Visible' -r 65 -g 65 -b 64"
     command2 = f"medet '{filename}.lrpt' '{filename}-Infrared' -r 68 -g 68 -b 68"
-    if satellite.name == 'METEOR-M2_2':  # Add -diff coding for M2 sates
+    if satellite.name == "METEOR-M2_2":  # Add -diff coding for M2 sates
         command1 += " -diff"
         command2 += " -diff"
-    process2 = subprocess.Popen([command2], shell=1)
+    process2 = subprocess.Popen([command2], shell=True)
     if (
-        subprocess.Popen([command1], shell=1).wait() == 0
+        subprocess.Popen([command1], shell=True).wait() == 0
         and process2.wait() == 0
         and satellite.delete_processed_files
     ):
         try:
             os.remove(filename + ".lrpt")
         except FileNotFoundError:
-            logger.error(f'File {filename}.lrpt not found. Might be because meteor_demod failed silently.')
+            logger.error(
+                f"File {filename}.lrpt not found. Might be because meteor_demod failed silently."
+            )
 
     # Convert to png to save on space
-    command1 = f"ffmpeg -hide_banner -i '{filename}-Visible.bmp' '{filename}-Visible.png' "
-    command2 = f"ffmpeg -hide_banner -i '{filename}-Infrared.bmp' '{filename}-Infrared.png' "
+    command1 = (
+        f"ffmpeg -hide_banner -i '{filename}-Visible.bmp' '{filename}-Visible.png' "
+    )
+    command2 = (
+        f"ffmpeg -hide_banner -i '{filename}-Infrared.bmp' '{filename}-Infrared.png' "
+    )
     if (
-        subprocess.Popen([command1], shell=1).wait() == 0
-        and subprocess.Popen([command2], shell=1).wait() == 0
+        subprocess.Popen([command1], shell=True).wait() == 0
+        and subprocess.Popen([command2], shell=True).wait() == 0
         and satellite.delete_processed_files
     ):
         try:
             os.remove(filename + "-Visible.bmp")
             os.remove(filename + "-Infrared.bmp")
         except FileNotFoundError:
-            logger.error(f'No bitmaps found for {filename}. Symptom that medet command has failed silently')
+            logger.error(
+                f"No bitmaps found for {filename}. Symptom that medet command has failed silently"
+            )
     # Return a list of produced outputs
-    output_files.append(filename + "-Visible.bmp")
-    output_files.append(filename + "-Infrared.bmp")
+    output_files.append(filename + "-Visible.png")
+    output_files.append(filename + "-Infrared.png")
 
     logger.info(f"Done decoding LRPT '{filename}'!")
 
@@ -298,21 +316,25 @@ def decodePass(filename, satellite, date, passobj):
             passobj.aos,
             config.location.latitude_deg,
             config.location.longitude_deg,
-            config.location.elevation_m
+            config.location.elevation_m,
         )
 
         if passobj.max_elevation_deg >= config.post_processing_hook_min_elevation:
             if config.post_processing_hook_daytime_only and is_daytime:
                 if config.post_processing_hook_foreach:
                     for file_out in output_files:
-                        command = config.post_processing_hook_command.replace("{file}", f"'{file_out}'")
-                        subprocess.Popen([command], shell=1).wait()
+                        command = config.post_processing_hook_command.replace(
+                            "{file}", f"'{file_out}'"
+                        )
+                        subprocess.Popen([command], shell=True).wait()
                 else:
                     file_list = str()
                     for file_out in output_files:
                         file_list += f"'{file_out}' "
-                    command = config.post_processing_hook_command.replace("{file}", file_list)
-                    subprocess.Popen([command], shell=1).wait()
+                    command = config.post_processing_hook_command.replace(
+                        "{file}", file_list
+                    )
+                    subprocess.Popen([command], shell=True).wait()
 
 
 # Process pending decodings
@@ -331,5 +353,5 @@ def pass_at_daytime(aos, lat, lon, elev) -> bool:
     observer.lat, observer.lon, observer.elevation = lat, lon, elev
     observer.date = aos
     sun.compute(observer)
-    # alt is in radians so convert to degrees. Use the nautical night (-12º) to get the funky shadows 
-    return sun.alt*180/math.pi > -12
+    # alt is in radians so convert to degrees. Use the nautical night (-12º) to get the funky shadows
+    return sun.alt * 180 / math.pi > -12

@@ -41,8 +41,8 @@ satellites:
     downlink: LRPT
     delete_processed_files: true
 config:
-  # How often should TLE data be updated?
-  tle_update_interval: 1
+  # How often should TLE data be updated in hours
+  tle_update_interval: 6
   # Where will images and temporary files be stored
   output_dir: "/home/pi/sate_data"
   # Your location
