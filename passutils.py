@@ -285,6 +285,19 @@ def decodeLRPT(filename, satellite):
             logger.error(
                 f"No bitmaps found for {filename}. Symptom that medet command has failed silently"
             )
+
+
+    # Correct image geometry
+    command1 = (
+        f"python3 /home/pi/src/meteor_corrector/correct.py '{filename}-Visible.png' -o '{filename}-Visible.png'"
+    )
+    command2 = (
+         f"python3 /home/pi/src/meteor_corrector/correct.py '{filename}-Infrared.png' -o '{filename}-Infrared.png'"
+    )
+
+    subprocess.Popen([command1], shell=True).wait()
+    subprocess.Popen([command2], shell=True).wait()
+
     # Return a list of produced outputs
     output_files.append(filename + "-Visible.png")
     output_files.append(filename + "-Infrared.png")
