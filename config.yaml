@@ -34,7 +34,8 @@ satellites:
     delete_processed_files: true
 config:
   # How often should TLE data be updated in hours
-  tle_update_interval: 6
+  # Attention: after too many requests celestrak blocks them so keep it reasonably high
+  tle_update_interval: 24
   # Where will images and temporary files be stored
   output_dir: "/home/pi/sate_data"
   # Your location

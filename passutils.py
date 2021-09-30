@@ -27,8 +27,8 @@ def schedulePass(pass_to_add, satellite, custom_aos=0, custom_los=0):
     core.scheduler.add_job(
         recordPass, "date", [satellite, custom_los, pass_to_add], run_date=custom_aos
     )
-    logger.info(f"Scheduled {satellite.name} pass at {str(custom_aos)}")
-
+    logger.info(f"Scheduled {satellite.name} pass at {str(custom_aos)} "
+                f"with max elevation of {pass_to_add.max_elevation_deg}")
 
 # Schedule passes and resolve conflicts
 def updatePass():
@@ -203,13 +203,20 @@ def recordPass(satellite, end_time, passobj):
 
 
 # Decode APT file
-def decodeAPT(filename, satellite):
+def decodeAPT(filename, satellite, passobj):
     output_files = list()
     # sate name to use in noaa-apt command with the format "noaa_1x"
     sate_name = satellite.name.lower()
     logger.info(f"Decoding APT {sate_name} in '{filename}'")
-    # N-S or S-N pass time is inferred from file timestamp. Used to rotate the image with -R
-    command = f"noaa-apt -R auto -s {sate_name} '{filename}.wav' -o '{filename}.png'"
+
+    # get if pas is ascending (South to North)
+    # TODO: move somewhere else and cleanup
+    predictor = satellite.getPredictor()
+    lat_at_aos = predictor.get_position(passobj.aos).position_llh[0]
+    lat_after_aos = predictor.get_position(passobj.aos + timedelta(seconds=1)).position_llh[0]
+    is_ascending = lat_after_aos > lat_at_aos
+    rotate = "yes" if is_ascending else "no"
+    command = f"noaa-apt --rotate {rotate} -s {sate_name} '{filename}.wav' -o '{filename}.png'"
 
     # Run and delete the recording to save disk space
     if (
@@ -311,7 +318,7 @@ def decodeLRPT(filename, satellite):
 def decodePass(filename, satellite, date, passobj):
     output_files = list()
     if satellite.downlink == "APT":
-        output_files = decodeAPT(filename, satellite)
+        output_files = decodeAPT(filename, satellite, passobj)
     elif satellite.downlink == "LRPT":
         output_files = decodeLRPT(filename, satellite)
     else:
