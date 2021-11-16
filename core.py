@@ -4,6 +4,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import utc
 from threading import Lock
 import logging
+
 logger = logging.getLogger('main.core')
 
 import config
@@ -44,14 +45,17 @@ class Satellite:
         self.downlink = downlink
         self.delete_processed_files = delete_processed_files
 
-    def fetchTLE(self):
+    def fetch_tle(self):
         logger.info(f'Updating TLE for {self.verbose_name}...')
-        tle = fetch_tle.fetch_tle_from_celestrak(self.norad)
-        name, line1, line2 = tle
-        self.tle_1 = line1
-        self.tle_2 = line2
+        try:
+            tle = fetch_tle.fetch_tle_from_celestrak(self.norad)
+            name, line1, line2 = tle
+            self.tle_1 = line1
+            self.tle_2 = line2
+        except ConnectionError as ex:
+            logger.error(f"Failed to fetch the TLE for {self.name} with exception {ex}")
 
-    def getPredictor(self):
+    def get_predictor(self):
         self.predictor = get_predictor_from_tle_lines((self.tle_1, self.tle_2))
         return self.predictor
 
@@ -68,5 +72,5 @@ class Recording:
 # Update TLE
 def updateTLEs():
     for satellite in config.satellites:
-        satellite.fetchTLE()
+        satellite.fetch_tle()
     logger.info('TLEs updated!')
