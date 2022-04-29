@@ -9,8 +9,7 @@ import ephem
 
 import config
 import core
-import rss
-from core import Recording
+from core import Recording, Satellite
 
 logger = logging.getLogger("main.passutils")
 
@@ -27,8 +26,11 @@ def schedulePass(pass_to_add, satellite, custom_aos=0, custom_los=0):
     core.scheduler.add_job(
         recordPass, "date", [satellite, custom_los, pass_to_add], run_date=custom_aos
     )
-    logger.info(f"Scheduled {satellite.name} pass at {str(custom_aos)} "
-                f"with max elevation of {pass_to_add.max_elevation_deg}")
+    logger.info(
+        f"Scheduled {satellite.name} pass at {str(custom_aos)} "
+        f"with max elevation of {pass_to_add.max_elevation_deg}"
+    )
+
 
 # Schedule passes and resolve conflicts
 def updatePass():
@@ -203,7 +205,7 @@ def recordPass(satellite, end_time, passobj):
 
 
 # Decode APT file
-def decodeAPT(filename, satellite, passobj):
+def decodeAPT(filename, satellite: Satellite, passobj):
     output_files = list()
     # sate name to use in noaa-apt command with the format "noaa_1x"
     sate_name = satellite.name.lower()
@@ -211,12 +213,14 @@ def decodeAPT(filename, satellite, passobj):
 
     # get if pas is ascending (South to North)
     # TODO: move somewhere else and cleanup
-    predictor = satellite.getPredictor()
+    predictor = satellite.get_predictor()
     lat_at_aos = predictor.get_position(passobj.aos).position_llh[0]
-    lat_after_aos = predictor.get_position(passobj.aos + timedelta(seconds=1)).position_llh[0]
+    lat_after_aos = predictor.get_position(
+        passobj.aos + timedelta(seconds=1)
+    ).position_llh[0]
     is_ascending = lat_after_aos > lat_at_aos
-    rotate = "yes" if is_ascending else "no"
-    command = f"noaa-apt --rotate {rotate} -s {sate_name} '{filename}.wav' -o '{filename}.png'"
+
+    command = f"noaa-apt --rotate {'yes' if is_ascending else 'no'} -s {sate_name} '{filename}.wav' -o '{filename}.png'"
 
     # Run and delete the recording to save disk space
     if (
@@ -293,14 +297,9 @@ def decodeLRPT(filename, satellite):
                 f"No bitmaps found for {filename}. Symptom that medet command has failed silently"
             )
 
-
     # Correct image geometry
-    command1 = (
-        f"python3 /home/pi/src/meteor_corrector/correct.py '{filename}-Visible.png' -o '{filename}-Visible.png'"
-    )
-    command2 = (
-         f"python3 /home/pi/src/meteor_corrector/correct.py '{filename}-Infrared.png' -o '{filename}-Infrared.png'"
-    )
+    command1 = f"python3 /home/pi/src/meteor_corrector/correct.py '{filename}-Visible.png' -o '{filename}-Visible.png'"
+    command2 = f"python3 /home/pi/src/meteor_corrector/correct.py '{filename}-Infrared.png' -o '{filename}-Infrared.png'"
 
     subprocess.Popen([command1], shell=True).wait()
     subprocess.Popen([command2], shell=True).wait()
@@ -326,6 +325,8 @@ def decodePass(filename, satellite, date, passobj):
 
     # Add on the RSS feed if enabled
     if config.rss_enabled:
+        import rss
+
         rss.addRSSPass(
             satellite, filename.replace(config.output_dir + "/", ""), date, passobj
         )

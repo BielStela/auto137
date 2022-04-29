@@ -1,14 +1,12 @@
-import time
-import passutils
-import os
-import rss
-from datetime import datetime, timedelta
-from threading import Thread
-from pathlib import Path
 import logging
+import os
+import time
+from pathlib import Path
+from threading import Thread
 
 import config
 import core
+import passutils
 
 
 def main():
@@ -47,6 +45,7 @@ def main():
     
     # Start RSS Server if enabled
     if config.rss_enabled:
+        import rss
         rss.startServer()
     
     # Schedule passes
